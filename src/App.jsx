@@ -1,274 +1,650 @@
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Mail, Phone, Link2, Copy, Check, Menu, X, ArrowUp, ArrowUpRight, GitBranch, Terminal } from "lucide-react";
 
-const STACK = ["React", "Node.js", "MongoDB", "Express", "Tailwind CSS", "JavaScript"];
+/* ---------------------------------------------------------
+   THEME — "portfolio as repository"
+   A warm paper palette with a single deep-pine accent,
+   borrowed from a code editor's light theme, not a dark
+   navy/blue template.
+--------------------------------------------------------- */
+const C = {
+  paper: "#F5F3EA",
+  paperAlt: "#EEE9DA",
+  ink: "#1B1912",
+  inkSoft: "#4A4636",
+  muted: "#8C876F",
+  line: "#DCD5BE",
+  pine: "#2F5D4F",
+  pineDeep: "#1F4238",
+  add: "#3B7A57",
+  del: "#B3543B",
+  amber: "#B07C2C",
+  code: "#EBE4D0",
+};
 
-const STATS = [
-  { num: "1+", label: "Year of coding" },
-  { num: "12", label: "GitHub repositories" },
-  { num: "3", label: "Full-stack projects" },
+const FONTS = `
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+`;
+
+const NAV_ITEMS = [
+  { id: "about", label: "about.md" },
+  { id: "projects", label: "projects/" },
+  { id: "contact", label: "contact.sh" },
 ];
+
+const STACK = ["Node.js", "Express", "MongoDB", "REST APIs", "JWT Auth", "Mongoose", "Git", "React"];
 
 const PROJECTS = [
   {
+    hash: "a3f9c2e",
+    type: "feat(api)",
     name: "ShopApp",
-    desc: "A full-stack e-commerce app with product listings, cart, and checkout. Built with React, Express, and MongoDB.",
-    lang: "JavaScript",
-    tags: ["React", "MongoDB"],
     emoji: "🛒",
+    desc: "An e-commerce backend with a full REST API for products, carts, and orders, paired with a React client that consumes it.",
+    details: [
+      "REST endpoints for products, cart, and orders (Express Router, MVC structure)",
+      "Mongoose schemas with validation, references, and indexed lookups",
+      "JWT-based auth middleware protecting checkout and order routes",
+      "Centralized error handler + input validation on every route",
+    ],
+    tags: ["Node.js", "Express", "MongoDB", "JWT", "React"],
+    stat: { add: 214, del: 18 },
+    link: "https://github.com/",
   },
   {
+    hash: "7d1b8f4",
+    type: "feat(auth)",
     name: "TaskFlow",
-    desc: "A task management app with user auth, drag-and-drop boards, and deadline reminders. My first MERN project.",
-    lang: "JavaScript",
-    tags: ["Node.js", "Express"],
     emoji: "✅",
+    desc: "A task manager API with user-scoped boards and role-based access, backing a drag-and-drop React client.",
+    details: [
+      "Boards/lists/cards modeled as related Mongoose documents",
+      "Auth middleware scopes every query to the logged-in user",
+      "Bulk-update endpoint for card reordering, kept idempotent",
+      "Manual + Postman test suite covering the main API routes",
+    ],
+    tags: ["Node.js", "Express", "MongoDB", "REST API"],
+    stat: { add: 176, del: 9 },
+    link: "https://github.com/",
   },
   {
+    hash: "e02cf61",
+    type: "feat(cache)",
     name: "WeatherNow",
-    desc: "A weather dashboard using the OpenWeather API. Displays forecasts, wind, and humidity with a clean UI.",
-    lang: "JavaScript",
-    tags: ["React", "API"],
     emoji: "🌤",
+    desc: "A backend service that proxies a third-party weather API, adding caching and rate-limit handling in front of it.",
+    details: [
+      "Server-side caching layer to cut redundant external API calls",
+      "Graceful fallback and error handling when the upstream API fails",
+      "Small Express layer decoupling the frontend from the provider",
+      "Lightweight React client for a single-glance forecast read",
+    ],
+    tags: ["Node.js", "Express", "REST API", "React"],
+    stat: { add: 98, del: 4 },
+    link: "https://github.com/",
   },
 ];
 
-const CONTACT = [
-  {
-    label: "Email",
-    text: "hardiksigdel361@gmail.com",
-    svg: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25H4.5a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5H4.5a2.25 2.25 0 00-2.25 2.25m19.5 0l-9.75 6.75L2.25 6.75" />
-      </svg>
-    ),
-  },
-  {
-    label: "Phone",
-    text: "+977 9764286240",
-    svg: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
-      </svg>
-    ),
-  },
-  {
-    label: "Location",
-    text: "Kathmandu, Nepal",
-    svg: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-      </svg>
-    ),
-  },
-  {
-    label: "GitHub",
-    text: "github.com/hardik",
-    svg: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
-      </svg>
-    ),
-  },
+const CONTACT_ROWS = [
+  { id: "email", flag: "--email", label: "hardikksigdel361@gmail.com", href: "mailto:hardikksigdel361@gmail.com", icon: Mail, copyValue: "hardikksigdel361@gmail.com" },
+  { id: "phone", flag: "--phone", label: "+977 976 428 6240", href: "tel:+9779764286240", icon: Phone, copyValue: "+9779764286240" },
+  { id: "github", flag: "--github", label: "github.com/", href: "https://github.com/", icon: Link2, copyValue: null },
 ];
 
-function ArrowUpRight() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
-    </svg>
-  );
-}
+const HERO_LINES = [
+  { prompt: "$ whoami", output: "Hardik Sigdel — Junior Backend Developer" },
+  { prompt: "$ curl localhost:4000/api/stack", output: '["Node.js","Express","MongoDB","REST APIs","JWT"]' },
+  { prompt: "$ curl localhost:4000/api/status", output: '{ "open_to_work": true }' },
+];
 
 export default function App() {
-  const [hovered, setHovered] = useState(null);
+  const [active, setActive] = useState("about");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [copied, setCopied] = useState(null);
+  const [revealed, setRevealed] = useState(0);
+  const [showTop, setShowTop] = useState(false);
+  const sectionRefs = useRef({});
+
+  // Scroll-spy for nav highlighting
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) setActive(entry.target.id);
+        });
+      },
+      { rootMargin: "-45% 0px -50% 0px", threshold: 0 }
+    );
+    NAV_ITEMS.forEach((item) => {
+      const el = document.getElementById(item.id);
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, []);
+
+  // Show "back to top" once scrolled
+  useEffect(() => {
+    const onScroll = () => setShowTop(window.scrollY > 700);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Hero terminal reveal (respects reduced motion)
+  useEffect(() => {
+    const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) {
+      setRevealed(HERO_LINES.length);
+      return;
+    }
+    let i = 0;
+    const timer = setInterval(() => {
+      i += 1;
+      setRevealed(i);
+      if (i >= HERO_LINES.length) clearInterval(timer);
+    }, 420);
+    return () => clearInterval(timer);
+  }, []);
+
+  const scrollToSection = useCallback((id) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setMenuOpen(false);
+  }, []);
+
+  const scrollToTop = useCallback(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  const handleCopy = useCallback(async (id, value) => {
+    try {
+      await navigator.clipboard.writeText(value);
+    } catch {
+      // fallback for environments without clipboard permission
+      const ta = document.createElement("textarea");
+      ta.value = value;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+    setCopied(id);
+    setTimeout(() => setCopied((c) => (c === id ? null : c)), 1600);
+  }, []);
 
   return (
-    <div className="bg-[#0d1117] text-[#e6edf3] min-h-screen font-sans text-[15px] leading-relaxed px-16">
+    <div style={{ background: C.paper, color: C.ink, fontFamily: "Inter, sans-serif" }} className="min-h-screen">
+      <style>{FONTS}</style>
 
-      {/* Navbar */}
-      <nav className="flex justify-between items-center px-8 py-[18px] border-b border-[#21262d] sticky top-0 bg-[#0d1117]/95 backdrop-blur-sm z-10">
-        <div className="flex items-center gap-2 text-[16px] font-medium">
-          <span className="w-2 h-2 rounded-full bg-[#58a6ff] inline-block" />
-          hardik.dev
-        </div>
-
-       <ul className="flex gap-6 list-none">
-  {["About", "Projects", "Contact"].map((link) => (
-    <li key={link}>
-      <a
-        href={`#${link.toLowerCase()}`}
-        className="text-[13px] text-[#8b949e] hover:text-[#e6edf3] transition-colors"
+      {/* ================= NAVBAR — editor tab bar ================= */}
+      <nav
+        style={{ background: `${C.paper}E6`, borderBottom: `1px solid ${C.line}`, backdropFilter: "blur(8px)" }}
+        className="sticky top-0 z-50"
       >
-        {link}
-      </a>
-    </li>
-  ))}
-</ul>
-        <div className="flex items-center gap-1.5 text-[12px] text-[#3fb950] bg-[#3fb950]/10 border border-[#3fb950]/20 px-2.5 py-1 rounded-full">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#3fb950] animate-pulse inline-block" />
-          Open to work
+        <div className="max-w-6xl mx-auto px-5 md:px-8">
+          <div className="flex items-center justify-between h-16">
+            {/* file tab */}
+            <button
+              onClick={scrollToTop}
+              className="flex items-center gap-2 group"
+              aria-label="Scroll to top"
+            >
+              <span
+                style={{ background: C.pine, color: C.paper }}
+                className="w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold"
+              >
+                <Terminal size={14} />
+              </span>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", color: C.inkSoft }} className="text-sm">
+                server<span style={{ color: C.muted }}>.js</span>
+              </span>
+            </button>
+
+            {/* desktop nav */}
+            <div className="hidden md:flex items-center gap-1">
+              {NAV_ITEMS.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => scrollToSection(item.id)}
+                  style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    color: active === item.id ? C.pine : C.inkSoft,
+                    background: active === item.id ? C.code : "transparent",
+                    borderBottom: active === item.id ? `2px solid ${C.pine}` : "2px solid transparent",
+                  }}
+                  className="px-3 py-1.5 text-xs rounded-t-md transition-colors hover:text-[inherit]"
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => scrollToSection("contact")}
+                style={{ borderColor: C.add, color: C.add, fontFamily: "'JetBrains Mono', monospace" }}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 border rounded-full text-xs hover:opacity-80 transition"
+              >
+                <span style={{ background: C.add }} className="w-1.5 h-1.5 rounded-full inline-block" />
+                open-to-work
+              </button>
+
+              {/* mobile menu toggle */}
+              <button
+                onClick={() => setMenuOpen((o) => !o)}
+                className="md:hidden p-2 rounded-md"
+                style={{ color: C.ink }}
+                aria-label="Toggle menu"
+                aria-expanded={menuOpen}
+              >
+                {menuOpen ? <X size={20} /> : <Menu size={20} />}
+              </button>
+            </div>
+          </div>
+
+          {/* mobile dropdown */}
+          {menuOpen && (
+            <div className="md:hidden pb-4 flex flex-col gap-1" style={{ borderTop: `1px solid ${C.line}` }}>
+              {NAV_ITEMS.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => scrollToSection(item.id)}
+                  style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    color: active === item.id ? C.pine : C.inkSoft,
+                  }}
+                  className="text-left px-2 py-2.5 text-sm"
+                >
+                  {item.label}
+                </button>
+              ))}
+              <button
+                onClick={() => scrollToSection("contact")}
+                style={{ borderColor: C.add, color: C.add, fontFamily: "'JetBrains Mono', monospace" }}
+                className="mt-1 flex items-center gap-1.5 px-3 py-2 border rounded-full text-xs w-fit"
+              >
+                <span style={{ background: C.add }} className="w-1.5 h-1.5 rounded-full inline-block" />
+                open-to-work
+              </button>
+            </div>
+          )}
         </div>
       </nav>
 
-      {/* Hero */}
-      <section className="px-8 pt-[72px] max-w-[700px]">
-        <div className="flex items-center gap-2 text-[12px] tracking-widest uppercase text-[#58a6ff] mb-4">
-          <span className="block w-5 h-px bg-[#58a6ff]" />
-          Junior developer · Kathmandu, Nepal
-        </div>
-        <h1 className="text-[42px] font-medium leading-tight text-[#e6edf3] mb-2">
-          Hi, I'm <span className="text-[#58a6ff]">Hardik Sigdel</span>
-        </h1>
-        <p className="text-[18px] text-[#8b949e] mb-5">MERN Stack Developer</p>
-        <p className="text-[15px] text-[#8b949e] max-w-[500px] leading-[1.7] mb-7">
-          I build modern, fast, and responsive web applications. Currently leveling up my skills
-          in React and Node.js while working on personal projects and open source contributions.
-        </p>
-        <div className="flex gap-3 flex-wrap">
-          <button className="flex items-center gap-1.5 bg-[#1f6feb] hover:bg-[#388bfd] text-white px-5 py-2.5 rounded-lg text-[14px] font-medium transition-colors cursor-pointer border-none">
-            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
-            </svg>
-            View projects
-          </button>
-  
-          <a
-  href="mailto:hardikksigdel361@gmail.com"
-  className="flex items-center gap-1.5 bg-transparent hover:bg-[#161b22] text-[#c9d1d9] border border-[#30363d] hover:border-[#58a6ff] px-5 py-2.5 rounded-lg text-[14px] transition-colors cursor-pointer"
->
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="15"
-    height="15"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-    strokeWidth="1.8"
-    aria-hidden="true"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25H4.5a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5H4.5a2.25 2.25 0 00-2.25 2.25m19.5 0l-9.75 6.75L2.25 6.75"
-    />
-  </svg>
-  Get in touch
-</a>
-        </div>
-      </section>
-
-      {/* Tech Stack */}
-      <div className="px-8 pt-6 pb-12 flex items-center gap-2.5 flex-wrap">
-        <span className="text-[12px] text-[#6e7681] mr-1">Stack</span>
-        {STACK.map((tech) => (
-          <span key={tech} className="text-[12px] px-2.5 py-1 rounded-full bg-[#161b22] border border-[#21262d] text-[#8b949e]">
-            {tech}
-          </span>
-        ))}
-      </div>
-
-      {/* About */}
-      <section id="about" className="px-8 py-12 border-t border-[#21262d]">
-        <h2 className="text-[20px] font-medium text-[#e6edf3] mb-8">About me</h2>
-        <div className="grid grid-cols-2 gap-8">
-          <div className="text-[14px] text-[#8b949e] leading-[1.8] flex flex-col gap-3">
-            <p>
-              I'm a junior developer passionate about building things for the web.
-              I got into programming through YouTube tutorials and haven't stopped
-              since — there's always something new to learn.
-            </p>
-            <p>
-              I enjoy working on the full stack, from designing clean UIs in React to
-              setting up REST APIs with Express and MongoDB. I'm currently exploring
-              TypeScript and getting more comfortable with Git workflows.
-            </p>
-            <p>
-              When I'm not coding, I'm usually reading about system design or working
-            </p>
+      {/* ================= HERO ================= */}
+      <section className="max-w-6xl mx-auto px-5 md:px-8 pt-16 md:pt-24 pb-16 grid md:grid-cols-2 gap-12 items-center">
+        <div>
+          <div
+            style={{ fontFamily: "'JetBrains Mono', monospace", color: C.muted }}
+            className="text-xs mb-4 flex items-center gap-2"
+          >
+            <GitBranch size={13} /> main / hardik-sigdel
           </div>
-          <div className="flex flex-col gap-4">
-            {STATS.map((s) => (
-              <div key={s.label} className="flex items-center gap-3.5 bg-[#161b22] border border-[#21262d] rounded-[10px] px-5 py-4">
-                <div>
-                  <div className="text-[22px] font-medium text-[#e6edf3] leading-none">{s.num}</div>
-                  <div className="text-[12px] text-[#6e7681] mt-0.5">{s.label}</div>
+
+          <h1
+            style={{ fontFamily: "'Fraunces', serif", color: C.ink, lineHeight: 1.05 }}
+            className="text-5xl md:text-6xl font-semibold tracking-tight"
+          >
+            Hi, I'm <span style={{ color: C.pine, fontStyle: "italic" }}>Hardik</span>.
+            <br />I build backend systems.
+          </h1>
+
+          <p style={{ color: C.inkSoft }} className="mt-6 text-lg leading-relaxed max-w-md">
+            A junior backend developer focused on Node.js and Express — designing REST
+            APIs, modeling data in MongoDB, and writing server-side code that holds up
+            under real use. Currently looking for my first full-time role.
+          </p>
+
+          <div className="mt-8 flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => scrollToSection("projects")}
+              style={{ background: C.pine, color: C.paper }}
+              className="px-5 py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition flex items-center gap-1.5"
+            >
+              View Projects <ArrowUpRight size={15} />
+            </button>
+            <button
+              onClick={() => scrollToSection("contact")}
+              style={{ borderColor: C.line, color: C.ink }}
+              className="px-5 py-2.5 border rounded-lg text-sm font-medium hover:border-current transition"
+            >
+              Contact Me
+            </button>
+            <button
+              onClick={() => handleCopy("hero-email", "hardikksigdel361@gmail.com")}
+              style={{ color: C.inkSoft }}
+              className="px-3 py-2.5 text-sm font-medium flex items-center gap-1.5 hover:text-current transition"
+            >
+              {copied === "hero-email" ? <Check size={15} style={{ color: C.add }} /> : <Copy size={15} />}
+              {copied === "hero-email" ? "Copied" : "Copy email"}
+            </button>
+          </div>
+        </div>
+
+        {/* terminal window */}
+        <div
+          style={{ background: C.pineDeep, borderRadius: 12 }}
+          className="shadow-xl overflow-hidden"
+        >
+          <div style={{ background: "#16332B" }} className="flex items-center gap-1.5 px-4 py-3">
+            <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#E5605A" }} />
+            <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#E5B75A" }} />
+            <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#5AC271" }} />
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", color: "#8FB5AA" }} className="text-xs ml-2">
+              zsh — hardik
+            </span>
+          </div>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace" }} className="p-5 text-sm min-h-[220px]">
+            {HERO_LINES.slice(0, revealed).map((line, idx) => (
+              <div key={idx} className="mb-3">
+                <div style={{ color: "#8FB5AA" }}>{line.prompt}</div>
+                <div style={{ color: "#F2EFE4" }} className="mt-1">
+                  {line.output}
                 </div>
               </div>
             ))}
+            {revealed < HERO_LINES.length ? (
+              <span style={{ color: "#8FB5AA" }} className="animate-pulse">▍</span>
+            ) : (
+              <span style={{ color: "#8FB5AA" }}>
+                $ <span className="animate-pulse">▍</span>
+              </span>
+            )}
           </div>
         </div>
       </section>
 
-      {/* Projects */}
-      <section id="projects" className="px-8 py-12 border-t border-[#21262d]">
-        <div className="flex items-baseline gap-3 mb-8">
-          <h2 className="text-[20px] font-medium text-[#e6edf3]">Projects</h2>
-          <span className="text-[12px] text-[#6e7681] bg-[#161b22] border border-[#21262d] px-2 py-0.5 rounded-full">3 repos</span>
-        </div>
-        <div className="grid grid-cols-3 gap-4">
-          {PROJECTS.map((p) => (
-            <div
-              key={p.name}
-              className={`bg-[#161b22] border rounded-[10px] p-5 cursor-pointer flex flex-col gap-2.5 transition-colors ${
-                hovered === p.name ? "border-[#388bfd]" : "border-[#21262d]"
-              }`}
-              onMouseEnter={() => setHovered(p.name)}
-              onMouseLeave={() => setHovered(null)}
+      {/* stack strip */}
+      <div style={{ borderTop: `1px solid ${C.line}`, borderBottom: `1px solid ${C.line}` }} className="py-4">
+        <div className="max-w-6xl mx-auto px-5 md:px-8 flex flex-wrap justify-center gap-2">
+          {STACK.map((tech) => (
+            <span
+              key={tech}
+              style={{ fontFamily: "'JetBrains Mono', monospace", background: C.code, color: C.inkSoft, border: `1px solid ${C.line}` }}
+              className="px-3 py-1 text-xs rounded-full"
             >
-              <div className="flex justify-between items-start">
-                <span className="text-[22px] leading-none">{p.emoji}</span>
-                <span className="text-[#6e7681]"><ArrowUpRight /></span>
-              </div>
-              <div className="text-[15px] font-medium text-[#e6edf3]">{p.name}</div>
-              <div className="text-[13px] text-[#6e7681] leading-[1.6] flex-1">{p.desc}</div>
-              <div className="flex gap-1.5 flex-wrap items-center mt-1">
-                <span className="flex items-center gap-1 text-[12px] text-[#6e7681]">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#f7df1e] inline-block" />
-                  {p.lang}
-                </span>
-                {p.tags.map((t) => (
-                  <span key={t} className="text-[11px] px-2 py-0.5 rounded-full bg-[#0d1117] border border-[#21262d] text-[#8b949e]">
-                    {t}
-                  </span>
-                ))}
-              </div>
-            </div>
+              {tech}
+            </span>
           ))}
         </div>
+      </div>
+
+      {/* ================= ABOUT ================= */}
+      <section id="about" className="max-w-6xl mx-auto px-5 md:px-8 py-20 md:py-28 scroll-mt-16">
+        <SectionHeader label="// about.md" title="About" />
+
+        <div className="grid md:grid-cols-5 gap-12 mt-10">
+          <div className="md:col-span-3 space-y-5" style={{ color: C.inkSoft }}>
+            <p className="text-lg leading-relaxed">
+              I'm a junior backend developer working mainly in{" "}
+              <strong style={{ color: C.ink }}>Node.js, Express, and MongoDB</strong>. I care
+              about the parts of an app most people never see: how the API is shaped, how the
+              data is modeled, what happens when a request fails.
+            </p>
+            <p className="leading-relaxed">
+              I'm early in my career and I treat that as an advantage — no bad habits to unlearn,
+              and I'm quick to pick up feedback. Every project I build gets a real REST API,
+              proper error handling, and schemas that reflect how the data is actually used, not
+              just what's fastest to hack together. I can also build the React frontend to consume
+              what I ship, but the server is where I spend most of my time.
+            </p>
+
+            <div style={{ background: C.paperAlt, border: `1px solid ${C.line}` }} className="rounded-lg p-4 mt-6">
+              <div style={{ fontFamily: "'JetBrains Mono', monospace", color: C.muted }} className="text-xs mb-2">
+                $ git branch
+              </div>
+              <div style={{ fontFamily: "'JetBrains Mono', monospace" }} className="text-sm space-y-1">
+                <div style={{ color: C.pine }}>* main <span style={{ color: C.muted }}>— building REST APIs</span></div>
+                <div style={{ color: C.inkSoft }}>  learning/system-design</div>
+                <div style={{ color: C.inkSoft }}>  learning/docker-and-testing</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="md:col-span-2">
+            <div style={{ background: C.pineDeep, borderRadius: 10 }} className="p-5">
+              <div style={{ fontFamily: "'JetBrains Mono', monospace", color: "#8FB5AA" }} className="text-xs mb-3">
+                routes/orders.js
+              </div>
+              <pre
+                style={{ fontFamily: "'JetBrains Mono', monospace", color: "#F2EFE4" }}
+                className="text-xs leading-relaxed whitespace-pre-wrap"
+              >
+{`router.post(
+  '/orders',
+  requireAuth,
+  validateOrder,
+  async (req, res, next) => {
+    try {
+      const order = await Order.create({
+        user: req.user.id,
+        items: req.body.items,
+      });
+      res.status(201).json(order);
+    } catch (err) {
+      next(err);
+    }
+  }
+);`}
+              </pre>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 mt-4">
+              <MiniStat value="3" label="APIs built" />
+              <MiniStat value="8" label="core technologies" />
+              <MiniStat value="∞" label="curiosity" />
+            </div>
+          </div>
+        </div>
       </section>
 
-      {/* Contact */}
-      <section className="px-8 py-12 border-t border-[#21262d]">
-        <h2 className="text-[20px] font-medium text-[#e6edf3] mb-8">Contact</h2>
-        <div className="bg-[#161b22] border border-[#21262d] rounded-xl p-8 grid grid-cols-2 gap-8 items-center">
-          <div>
-            <h3 className="text-[20px] font-medium text-[#e6edf3] mb-2">Let's work together</h3>
-            <p className="text-[14px] text-[#6e7681] leading-[1.7]">
-              I'm looking for junior developer roles or internship opportunities. I'm also happy
-              to collaborate on open source projects or freelance work.
-            </p>
-            <button className="flex items-center gap-1.5 mt-5 bg-[#1f6feb] hover:bg-[#388bfd] text-white px-5 py-2.5 rounded-lg text-[14px] font-medium transition-colors cursor-pointer border-none">
-              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25H4.5a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5H4.5a2.25 2.25 0 00-2.25 2.25m19.5 0l-9.75 6.75L2.25 6.75" />
-              </svg>
-              Email me
-            </button>
-          </div>
-          <div className="flex flex-col gap-3.5">
-            {CONTACT.map((c) => (
-              <div key={c.text} className="flex items-center gap-2.5 text-[13px] text-[#8b949e]">
-                <span className="text-[#58a6ff] w-5 flex-shrink-0">{c.svg}</span>
-                {c.text}
-              </div>
+      {/* ================= PROJECTS ================= */}
+      <section id="projects" style={{ background: C.paperAlt, borderTop: `1px solid ${C.line}`, borderBottom: `1px solid ${C.line}` }} className="py-20 md:py-28 scroll-mt-16">
+        <div className="max-w-6xl mx-auto px-5 md:px-8">
+          <SectionHeader label="// projects/" title="Selected work" subtitle="APIs and backend services I've designed and built, each with a client on top." />
+
+          <div className="mt-10 space-y-5">
+            {PROJECTS.map((p) => (
+              <ProjectCard key={p.hash} project={p} />
             ))}
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="px-8 py-6 border-t border-[#21262d] flex justify-between items-center text-[12px] text-[#6e7681]">
-        <span>© 2026 Hardik Sigdel</span>
-        <span>Built with React + Tailwind CSS</span>
+      {/* ================= CONTACT ================= */}
+      <section id="contact" className="max-w-6xl mx-auto px-5 md:px-8 py-20 md:py-28 scroll-mt-16">
+        <SectionHeader label="// contact.sh" title="Let's build something" subtitle="Open to full-time roles and freelance work — reach out any way that's easiest." />
+
+        <div style={{ background: C.pineDeep, borderRadius: 12 }} className="mt-10 overflow-hidden">
+          <div style={{ background: "#16332B" }} className="flex items-center gap-1.5 px-4 py-3">
+            <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#E5605A" }} />
+            <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#E5B75A" }} />
+            <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#5AC271" }} />
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", color: "#8FB5AA" }} className="text-xs ml-2">
+              contact.sh
+            </span>
+          </div>
+
+          <div className="p-5 md:p-6 space-y-1">
+            {CONTACT_ROWS.map((row) => {
+              const Icon = row.icon;
+              return (
+                <div
+                  key={row.id}
+                  className="flex items-center justify-between gap-3 py-3"
+                  style={{ borderBottom: `1px solid #2A4C41`, fontFamily: "'JetBrains Mono', monospace" }}
+                >
+                  <a
+                    href={row.href}
+                    target={row.id === "github" ? "_blank" : undefined}
+                    rel={row.id === "github" ? "noreferrer" : undefined}
+                    className="flex items-center gap-3 group min-w-0"
+                  >
+                    <span style={{ color: "#8FB5AA" }} className="text-sm shrink-0">
+                      $ ./contact {row.flag}
+                    </span>
+                    <span style={{ color: "#F2EFE4" }} className="text-sm truncate group-hover:underline">
+                      {row.label}
+                    </span>
+                    <Icon size={14} style={{ color: "#8FB5AA" }} className="shrink-0" />
+                  </a>
+
+                  {row.copyValue && (
+                    <button
+                      onClick={() => handleCopy(row.id, row.copyValue)}
+                      style={{ color: "#8FB5AA" }}
+                      className="flex items-center gap-1 text-xs px-2 py-1 rounded hover:opacity-80 transition shrink-0"
+                      aria-label={`Copy ${row.id}`}
+                    >
+                      {copied === row.id ? (
+                        <>
+                          <Check size={13} style={{ color: "#5AC271" }} /> copied
+                        </>
+                      ) : (
+                        <>
+                          <Copy size={13} /> copy
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ================= FOOTER ================= */}
+      <footer style={{ borderTop: `1px solid ${C.line}` }} className="py-8">
+        <div className="max-w-6xl mx-auto px-5 md:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", color: C.muted }} className="text-xs">
+            © 2026 Hardik Sigdel — built with React &amp; Tailwind
+          </span>
+          <button
+            onClick={scrollToTop}
+            style={{ color: C.inkSoft, border: `1px solid ${C.line}` }}
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full hover:border-current transition"
+          >
+            <ArrowUp size={13} /> Back to top
+          </button>
+        </div>
       </footer>
-    </div>)}
+
+      {/* floating back-to-top */}
+      {showTop && (
+        <button
+          onClick={scrollToTop}
+          style={{ background: C.pine, color: C.paper }}
+          className="fixed bottom-6 right-6 w-11 h-11 rounded-full shadow-lg flex items-center justify-center hover:opacity-90 transition z-40"
+          aria-label="Scroll to top"
+        >
+          <ArrowUp size={18} />
+        </button>
+      )}
+    </div>
+  );
+}
+
+function SectionHeader({ label, title, subtitle }) {
+  return (
+    <div>
+      <div style={{ fontFamily: "'JetBrains Mono', monospace", color: C.amber }} className="text-xs mb-2">
+        {label}
+      </div>
+      <h2 style={{ fontFamily: "'Fraunces', serif", color: C.ink }} className="text-3xl md:text-4xl font-semibold">
+        {title}
+      </h2>
+      {subtitle && (
+        <p style={{ color: C.muted }} className="mt-2 text-sm max-w-md">
+          {subtitle}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function MiniStat({ value, label }) {
+  return (
+    <div style={{ background: C.paperAlt, border: `1px solid ${C.line}` }} className="rounded-lg py-3 text-center">
+      <div style={{ fontFamily: "'Fraunces', serif", color: C.pine }} className="text-xl font-semibold">
+        {value}
+      </div>
+      <div style={{ color: C.muted }} className="text-[10px] mt-0.5 leading-tight px-1">
+        {label}
+      </div>
+    </div>
+  );
+}
+
+function ProjectCard({ project }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div
+      style={{ background: C.paper, border: `1px solid ${C.line}`, borderRadius: 10 }}
+      className="p-5 md:p-6 transition hover:shadow-md"
+    >
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="flex items-start gap-3 min-w-0">
+          <span className="text-2xl shrink-0">{project.emoji}</span>
+          <div className="min-w-0">
+            <div style={{ fontFamily: "'JetBrains Mono', monospace" }} className="flex items-center gap-2 flex-wrap text-xs mb-1">
+              <span style={{ color: C.pine }}>{project.type}</span>
+              <span style={{ color: C.muted }}>#{project.hash}</span>
+            </div>
+            <h3 style={{ fontFamily: "'Fraunces', serif", color: C.ink }} className="text-xl font-semibold">
+              {project.name}
+            </h3>
+          </div>
+        </div>
+
+        <div style={{ fontFamily: "'JetBrains Mono', monospace" }} className="text-xs flex items-center gap-2 shrink-0">
+          <span style={{ color: C.add }}>+{project.stat.add}</span>
+          <span style={{ color: C.del }}>−{project.stat.del}</span>
+        </div>
+      </div>
+
+      <p style={{ color: C.inkSoft }} className="mt-3 text-sm leading-relaxed">
+        {project.desc}
+      </p>
+
+      <button
+        onClick={() => setOpen((o) => !o)}
+        style={{ color: C.pine, fontFamily: "'JetBrains Mono', monospace" }}
+        className="mt-3 text-xs underline underline-offset-2"
+      >
+        {open ? "hide details" : "show details"}
+      </button>
+
+      {open && (
+        <ul style={{ color: C.inkSoft }} className="mt-3 space-y-1.5 text-sm list-disc list-inside">
+          {project.details.map((d, i) => (
+            <li key={i}>{d}</li>
+          ))}
+        </ul>
+      )}
+
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-2">
+          {project.tags.map((tag) => (
+            <span
+              key={tag}
+              style={{ background: C.code, color: C.inkSoft, fontFamily: "'JetBrains Mono', monospace" }}
+              className="px-2.5 py-1 text-[11px] rounded-full"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+
+        <a
+          href={project.link}
+          target="_blank"
+          rel="noreferrer"
+          style={{ color: C.pine }}
+          className="text-sm font-medium flex items-center gap-1 hover:underline shrink-0"
+        >
+          View on GitHub <ArrowUpRight size={14} />
+        </a>
+      </div>
+    </div>
+  );
+}
