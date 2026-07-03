@@ -88,7 +88,7 @@ const PROJECTS = [
 const CONTACT_ROWS = [
   { id: "email", flag: "--email", label: "hardikksigdel361@gmail.com", href: "mailto:hardikksigdel361@gmail.com", icon: Mail, copyValue: "hardikksigdel361@gmail.com" },
   { id: "phone", flag: "--phone", label: "+977 976 428 6240", href: "tel:+9779764286240", icon: Phone, copyValue: "+9779764286240" },
-  { id: "github", flag: "--github", label: "github.com/", href: "https://github.com/", icon: Link2, copyValue: null },
+  { id: "github", flag: "--github", label: "github.com/", href: "https://github.com/hardik-sigdel", icon: Link2, copyValue: null },
 ];
 
 const HERO_LINES = [
